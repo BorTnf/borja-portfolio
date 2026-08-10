@@ -188,4 +188,4 @@ Guía paso a paso en [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ---
 
-Desarrollado por Borja González González. Basado en el [ai-portfolio](https://github.com/DiegoLalanda/ai-portfolio) original de Diego Lalanda.
+Desarrollado por Borja González González. 
