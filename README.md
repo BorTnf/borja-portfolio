@@ -2,7 +2,7 @@
 
 Portfolio personal **conversacional**: en lugar de secciones estáticas, el visitante le hace preguntas en lenguaje natural (ES/EN) a un asistente de IA que responde y arma un **dashboard visual dinámico** con widgets (proyectos, experiencia, skills, timeline, educación, certificaciones, contacto, etc.).
 
-**Live:** [diegolalanda.pages.dev](https://diegolalanda.pages.dev/)
+**Live:** 
 
 - **Frontend** — Astro 5 + React Islands + Tailwind, sitio estático desplegado en **Cloudflare Pages**.
 - **Backend** — FastAPI + Google Gemini con *function calling*, desplegado en **Railway**.
