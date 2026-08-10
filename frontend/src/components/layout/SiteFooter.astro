@@ -1,0 +1,113 @@
+---
+import LanguageSwitcher from "@/components/layout/LanguageSwitcher.astro";
+import { getTranslations, type Locale } from "@/i18n";
+
+interface Props {
+  class?: string;
+  compact?: boolean;
+  locale: Locale;
+}
+
+const { class: className, compact = false, locale } = Astro.props;
+const t = getTranslations(locale);
+---
+
+<footer
+  class:list={[
+    "site-footer relative w-full border-t border-white/5 bg-transparent font-label-sm text-label-sm text-secondary",
+    compact ? "py-4 md:py-5" : "py-4 md:py-12",
+    className,
+  ]}
+>
+  <div
+    class="mx-auto flex max-w-container-max flex-col items-center justify-between gap-6 px-margin-edge md:flex-row md:gap-6"
+  >
+    <div class="hidden font-label-md text-label-md uppercase tracking-widest text-on-surface md:block">BORJA</div>
+    <div class="hidden text-center text-outline-variant md:block">{t.footer.tagline}</div>
+    <div class="site-footer__actions flex w-full flex-nowrap items-center justify-center gap-4 md:w-auto md:gap-6">
+      <LanguageSwitcher locale={locale} />
+      <button
+        type="button"
+        class="site-footer__cta copy-email-btn rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-primary shadow-[0_0_15px_rgba(208,188,255,0.2)] transition-all duration-300 hover:bg-primary hover:text-on-primary hover:shadow-[0_0_25px_rgba(208,188,255,0.4)] md:px-4 md:py-2"
+        data-email="borjag86@gmail.com"
+        data-label={t.footer.getInTouch}
+        data-copied-label={t.footer.emailCopied}
+      >
+        {t.footer.getInTouch}
+      </button>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function initCopyEmailButtons() {
+    document.querySelectorAll<HTMLButtonElement>(".copy-email-btn").forEach((btn) => {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = "true";
+      btn.addEventListener("click", async () => {
+        const email = btn.dataset.email ?? "";
+        const label = btn.dataset.label ?? "";
+        const copiedLabel = btn.dataset.copiedLabel ?? "";
+        try {
+          await navigator.clipboard.writeText(email);
+        } catch {
+          const textarea = document.createElement("textarea");
+          textarea.value = email;
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          document.body.removeChild(textarea);
+        }
+        btn.textContent = copiedLabel;
+        window.clearTimeout(Number(btn.dataset.resetTimer));
+        const timer = window.setTimeout(() => {
+          btn.textContent = label;
+        }, 2000);
+        btn.dataset.resetTimer = String(timer);
+      });
+    });
+  }
+
+  initCopyEmailButtons();
+  document.addEventListener("astro:page-load", initCopyEmailButtons);
+</script>
+
+<style>
+  .site-footer__actions :global(.lang-switcher) {
+    padding: 0.25rem 0.5rem;
+    gap: 0.25rem;
+    flex-shrink: 0;
+  }
+
+  .site-footer__link {
+    flex-shrink: 0;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    padding: 0.5rem 0.25rem;
+  }
+
+  .site-footer__cta {
+    flex-shrink: 0;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  @media (min-width: 768px) {
+    .site-footer__link {
+      font-size: inherit;
+      letter-spacing: inherit;
+      padding: 0;
+    }
+
+    .site-footer__cta {
+      font-size: inherit;
+    }
+
+    .site-footer__actions :global(.lang-switcher) {
+      padding: 0.35rem 0.65rem;
+      gap: 0.35rem;
+    }
+  }
+</style>

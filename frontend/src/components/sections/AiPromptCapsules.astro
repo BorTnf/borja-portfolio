@@ -1,0 +1,426 @@
+---
+import PromptPill from "@/components/sections/PromptPill.astro";
+import { getTranslations, type Locale } from "@/i18n";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = getTranslations(locale);
+const suggestionPool = t.suggestions;
+
+const capsuleSlots = [
+  { position: "top-[4%] left-[6%]", anim: "float-anim-1", desktopOnly: false },
+  { position: "top-[4%] right-[0%]", anim: "float-anim-2", desktopOnly: false },
+  { position: "bottom-0 left-[2%]", anim: "float-anim-3", desktopOnly: false },
+  { position: "bottom-0 right-[8%]", anim: "float-anim-4", desktopOnly: false },
+  { position: "top-[18%] left-[-12%]", anim: "float-anim-5", desktopOnly: true },
+  { position: "top-[18%] right-[-12%]", anim: "float-anim-2", desktopOnly: true },
+  { position: "bottom-[14%] left-[-6%]", anim: "float-anim-3", desktopOnly: true },
+  { position: "bottom-[14%] right-[-6%]", anim: "float-anim-4", desktopOnly: true },
+];
+---
+
+<div
+  id="suggestion-capsules-root"
+  class="relative mx-auto mt-8 flex h-[min(320px,32dvh)] w-full max-w-2xl items-center justify-center fade-in-up delay-500 md:mt-12 md:h-[min(400px,40dvh)]"
+  data-suggestions={JSON.stringify(suggestionPool)}
+  data-slots={JSON.stringify(capsuleSlots)}
+>
+  <div id="suggestion-capsules-layer" class="pointer-events-none absolute inset-0" aria-live="polite"></div>
+
+  <PromptPill
+    mode="editable"
+    inputId="ai-input"
+    class="relative z-20"
+    placeholders={t.prompts.placeholders}
+    sendAriaLabel={t.prompts.sendAriaLabel}
+  />
+</div>
+
+<script>
+  import { absorbIntoBlackHole } from "@/lib/black-hole-absorb";
+
+  interface Suggestion {
+    id: string;
+    label: string;
+    question: string;
+  }
+
+  interface CapsuleSlot {
+    position: string;
+    anim: string;
+    desktopOnly: boolean;
+  }
+
+  interface VisibleCapsule {
+    suggestion: Suggestion;
+    slotIndex: number;
+    element: HTMLButtonElement;
+  }
+
+  const root = document.getElementById("suggestion-capsules-root");
+  const layer = document.getElementById("suggestion-capsules-layer");
+  const input = document.getElementById("ai-input") as HTMLInputElement | null;
+  const submitButton = document.getElementById("ai-input-submit") as HTMLButtonElement | null;
+  const inputContainer = input?.closest(".glass-input-container");
+  const landingPhase = document.getElementById("phase-landing");
+
+  if (!root || !layer) {
+    // Solo existe en landing
+  } else {
+  const capsulesLayer = layer;
+  const pool: Suggestion[] = JSON.parse(root.dataset.suggestions ?? "[]");
+  const slots: CapsuleSlot[] = JSON.parse(root.dataset.slots ?? "[]");
+
+  let visibleCapsules: VisibleCapsule[] = [];
+  let cycleTimerId: number | undefined;
+  let stopped = false;
+  let isRotating = false;
+
+  const ROTATION_INTERVAL_MS = 4200;
+
+  function prefersReducedMotion() {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  function isDesktop() {
+    return window.matchMedia("(min-width: 768px)").matches;
+  }
+
+  function activeSlots() {
+    return slots.map((slot, index) => ({ slot, index })).filter(({ slot }) => !slot.desktopOnly || isDesktop());
+  }
+
+  function visibleCount() {
+    return isDesktop() ? 8 : 4;
+  }
+
+  function shuffle<T>(items: T[]) {
+    const copy = [...items];
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function pickRandom<T>(items: T[]) {
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
+  function updateSubmitState() {
+    if (submitButton) submitButton.disabled = !input?.value.trim();
+  }
+
+  function flashInput() {
+    if (!inputContainer) return;
+    inputContainer.classList.add("input-flash");
+    window.setTimeout(() => inputContainer.classList.remove("input-flash"), 450);
+  }
+
+  function pulseCapsule(button: HTMLButtonElement) {
+    if (prefersReducedMotion()) return;
+    button.classList.remove("capsule-pulse");
+    void button.offsetWidth;
+    button.classList.add("capsule-pulse");
+    window.setTimeout(() => button.classList.remove("capsule-pulse"), 450);
+  }
+
+  function shouldStopCycle() {
+    if (stopped) return true;
+    if (document.activeElement === input) return true;
+    if (input?.value.trim()) return true;
+    if (landingPhase?.classList.contains("hidden")) return true;
+    return false;
+  }
+
+  function clearCycleTimer() {
+    if (cycleTimerId !== undefined) {
+      window.clearTimeout(cycleTimerId);
+      cycleTimerId = undefined;
+    }
+  }
+
+  function stopCycle() {
+    stopped = true;
+    isRotating = false;
+    clearCycleTimer();
+  }
+
+  function absorbVisibleCapsules() {
+    if (visibleCapsules.length === 0) return;
+    const elements = visibleCapsules.map((entry) => entry.element);
+    visibleCapsules = [];
+    clearCycleTimer();
+    isRotating = false;
+    void absorbIntoBlackHole(elements, { delay: 0 });
+  }
+
+  /** Elimina píldoras huérfanas si el DOM y el estado interno se desincronizan. */
+  function reconcileCapsuleLayer() {
+    const tracked = new Set(visibleCapsules.map((entry) => entry.element));
+    capsulesLayer.querySelectorAll<HTMLButtonElement>("[data-suggestion-id]").forEach((button) => {
+      if (!tracked.has(button)) button.remove();
+    });
+  }
+
+  function createCapsule(suggestion: Suggestion, slot: CapsuleSlot): HTMLButtonElement {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.suggestionId = suggestion.id;
+    button.dataset.question = suggestion.question;
+    button.className = [
+      "floating-capsule",
+      "pointer-events-auto",
+      "absolute",
+      "cursor-pointer",
+      "rounded-full",
+      "px-4 py-2",
+      "font-label-sm",
+      "text-label-sm",
+      "text-on-surface",
+      slot.position,
+      slot.anim,
+    ].join(" ");
+    button.textContent = suggestion.label;
+    return button;
+  }
+
+  function showCapsule(button: HTMLButtonElement, animate: boolean) {
+    button.classList.remove("is-hidden");
+    if (!animate || prefersReducedMotion()) return;
+    button.classList.add("is-appearing");
+    window.setTimeout(() => button.classList.remove("is-appearing"), 450);
+  }
+
+  function hideCapsule(button: HTMLButtonElement): Promise<void> {
+    if (prefersReducedMotion()) {
+      button.classList.add("is-hidden");
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      button.classList.add("is-hidden");
+      const onTransitionEnd = (event: TransitionEvent) => {
+        if (event.propertyName !== "opacity") return;
+        button.removeEventListener("transitionend", onTransitionEnd);
+        resolve();
+      };
+      button.addEventListener("transitionend", onTransitionEnd);
+      window.setTimeout(resolve, 500);
+    });
+  }
+
+  function renderInitial() {
+    capsulesLayer.innerHTML = "";
+    visibleCapsules = [];
+
+    const availableSlots = activeSlots();
+    const initialSuggestions = shuffle(pool).slice(0, Math.min(visibleCount(), pool.length));
+
+    initialSuggestions.forEach((suggestion, index) => {
+      const slotEntry = availableSlots[index % availableSlots.length];
+      if (!slotEntry) return;
+
+      const element = createCapsule(suggestion, slotEntry.slot);
+      capsulesLayer.appendChild(element);
+      visibleCapsules.push({ suggestion, slotIndex: slotEntry.index, element });
+
+      if (prefersReducedMotion()) {
+        showCapsule(element, false);
+      } else {
+        element.classList.add("is-hidden");
+        window.setTimeout(() => showCapsule(element, true), 80 + index * 90);
+      }
+    });
+  }
+
+  function getAvailableSuggestions() {
+    const visibleIds = new Set(visibleCapsules.map((entry) => entry.suggestion.id));
+    return pool.filter((suggestion) => !visibleIds.has(suggestion.id));
+  }
+
+  function getOccupiedSlotIndexes(excludeEntryIndex?: number) {
+    return new Set(
+      visibleCapsules
+        .filter((_, index) => index !== excludeEntryIndex)
+        .map((entry) => entry.slotIndex)
+    );
+  }
+
+  function getAvailableSlots(excludeEntryIndex?: number) {
+    const occupied = getOccupiedSlotIndexes(excludeEntryIndex);
+    const open = activeSlots().filter(({ index }) => !occupied.has(index));
+    return open.length > 0 ? open : activeSlots();
+  }
+
+  async function swapOneCapsule() {
+    if (shouldStopCycle()) {
+      stopCycle();
+      return;
+    }
+
+    if (visibleCapsules.length === 0 || pool.length <= visibleCount()) return;
+    if (visibleCapsules.length !== visibleCount()) {
+      reconcileCapsuleLayer();
+      return;
+    }
+
+    const availableSuggestions = getAvailableSuggestions();
+    if (availableSuggestions.length === 0) return;
+
+    const entryIndex = Math.floor(Math.random() * visibleCapsules.length);
+    const current = visibleCapsules[entryIndex];
+    if (!current) return;
+
+    const nextSuggestion = pickRandom(availableSuggestions);
+    const nextSlotEntry = pickRandom(getAvailableSlots(entryIndex));
+    if (!nextSlotEntry) return;
+
+    await hideCapsule(current.element);
+
+    if (shouldStopCycle()) {
+      stopCycle();
+      return;
+    }
+
+    // Revalidar: otro swap concurrente pudo modificar el estado mientras hacíamos fade-out.
+    const stillPresent = visibleCapsules[entryIndex]?.element === current.element;
+    if (!stillPresent) {
+      if (current.element.isConnected) current.element.remove();
+      reconcileCapsuleLayer();
+      return;
+    }
+
+    current.element.remove();
+    visibleCapsules.splice(entryIndex, 1);
+
+    const nextElement = createCapsule(nextSuggestion, nextSlotEntry.slot);
+    nextElement.classList.add("is-hidden");
+    capsulesLayer.appendChild(nextElement);
+    visibleCapsules.push({
+      suggestion: nextSuggestion,
+      slotIndex: nextSlotEntry.index,
+      element: nextElement,
+    });
+
+    showCapsule(nextElement, true);
+    reconcileCapsuleLayer();
+  }
+
+  async function rotateCapsules() {
+    if (isRotating || shouldStopCycle()) {
+      if (shouldStopCycle()) stopCycle();
+      return;
+    }
+
+    isRotating = true;
+    try {
+      const swaps = prefersReducedMotion() ? 1 : Math.random() > 0.45 ? 2 : 1;
+      for (let i = 0; i < swaps; i += 1) {
+        await swapOneCapsule();
+        if (shouldStopCycle()) break;
+      }
+    } finally {
+      isRotating = false;
+    }
+  }
+
+  function scheduleNextRotation() {
+    clearCycleTimer();
+    if (stopped || prefersReducedMotion()) return;
+
+    cycleTimerId = window.setTimeout(async () => {
+      await rotateCapsules();
+      if (!stopped) scheduleNextRotation();
+    }, ROTATION_INTERVAL_MS);
+  }
+
+  function startCycle() {
+    if (prefersReducedMotion()) return;
+    scheduleNextRotation();
+  }
+
+  capsulesLayer.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLButtonElement) || !target.dataset.question) return;
+
+    if (!input) return;
+    input.value = target.dataset.question;
+    input.focus();
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    updateSubmitState();
+    pulseCapsule(target);
+    flashInput();
+    stopCycle();
+  });
+
+  input?.addEventListener("focus", stopCycle);
+  input?.addEventListener("input", () => {
+    updateSubmitState();
+    if (input.value.trim()) stopCycle();
+  });
+
+  input?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && submitButton && !submitButton.disabled) {
+      submitButton.click();
+    }
+  });
+
+  submitButton?.addEventListener("click", () => {
+    const question = input?.value.trim();
+    if (!question) return;
+    window.dispatchEvent(new CustomEvent("mock-chat:submit", { detail: { question } }));
+  });
+
+  window.addEventListener("mock-chat:submit", () => {
+    stopCycle();
+    absorbVisibleCapsules();
+  });
+
+  window.addEventListener("portfolio:reset", () => {
+    stopped = false;
+    isRotating = false;
+    if (input) input.value = "";
+    updateSubmitState();
+    renderInitial();
+    startCycle();
+  });
+
+  window.addEventListener("resize", () => {
+    if (shouldStopCycle()) return;
+    clearCycleTimer();
+    isRotating = false;
+    stopped = false;
+    renderInitial();
+    startCycle();
+  });
+
+  const pageRoot = document.getElementById("page-root");
+  const locale = pageRoot?.dataset.locale || "es";
+
+  function updateOfflineState() {
+    if (!input) return;
+    if (!navigator.onLine) {
+      input.disabled = true;
+      if (submitButton) submitButton.disabled = true;
+      input.placeholder = locale === "en" ? "No internet connection" : "Sin conexión a internet";
+      input.value = "";
+    } else {
+      input.disabled = false;
+      input.placeholder = "";
+      updateSubmitState();
+    }
+  }
+
+  window.addEventListener("online", updateOfflineState);
+  window.addEventListener("offline", updateOfflineState);
+  updateOfflineState();
+
+  renderInitial();
+  updateSubmitState();
+  startCycle();
+  }
+</script>

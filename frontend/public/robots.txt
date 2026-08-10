@@ -1,0 +1,7 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemaps
+# TODO: set the real domain once it's registered
+# Sitemap: https://<tu-dominio>/sitemap-index.xml

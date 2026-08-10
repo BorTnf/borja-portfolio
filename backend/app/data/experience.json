@@ -1,0 +1,46 @@
+[
+  {
+    "id": "exp-eave-content-automation",
+    "role": "Responsable de Contenidos y Automatización",
+    "company": "Eave",
+    "companyUrl": null,
+    "location": "Santa Cruz de Tenerife, Canarias, España",
+    "employmentType": "full-time",
+    "workMode": "onsite",
+    "startDate": "2026-08",
+    "endDate": null,
+    "current": true,
+    "summary": "Automatización de contenidos con IA y desarrollo de soluciones de inteligencia artificial aplicadas a distintas áreas del negocio.",
+    "highlights": [
+      "Automatización de la generación y gestión de contenidos mediante IA.",
+      "Diseño e implementación de soluciones de inteligencia artificial de todo tipo para procesos internos."
+    ],
+    "stack": [],
+    "tags": ["ai", "automation", "content", "full-time"],
+    "featured": true,
+    "order": 1,
+    "visible": true
+  },
+  {
+    "id": "exp-laliga-marketing-horeca",
+    "role": "Responsable de Marketing — Proyecto Horeca",
+    "company": "LaLiga",
+    "companyUrl": "https://www.laliga.com",
+    "location": "Santa Cruz de Tenerife, Canarias, España",
+    "employmentType": "full-time",
+    "workMode": "remote",
+    "startDate": "2021-08",
+    "endDate": "2026-07",
+    "current": false,
+    "summary": "Responsable de marketing del proyecto Horeca de LaLiga en Santa Cruz de Tenerife.",
+    "highlights": [
+      "Gestión y desarrollo del proyecto Horeca (hostelería y restauración) para LaLiga en la provincia.",
+      "Responsable de las acciones de marketing asociadas al proyecto en Santa Cruz de Tenerife."
+    ],
+    "stack": [],
+    "tags": ["marketing", "horeca", "laliga"],
+    "featured": true,
+    "order": 2,
+    "visible": true
+  }
+]

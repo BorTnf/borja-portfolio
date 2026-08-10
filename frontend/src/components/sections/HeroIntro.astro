@@ -1,0 +1,80 @@
+---
+import WarpText from "@/components/ui/WarpText.astro";
+import GreetingHi from "@/components/sections/GreetingHi.astro";
+import { getTranslations, type Locale } from "@/i18n";
+
+interface Props {
+  receded?: boolean;
+  compact?: boolean;
+  locale: Locale;
+}
+
+const { receded = false, compact = false, locale } = Astro.props;
+const t = getTranslations(locale);
+const roles = t.hero.roles;
+---
+
+{
+  receded ? (
+    <div class="mb-8 scale-95 pt-2 opacity-60 transition-all duration-1000 md:pt-3">
+      <div class="mb-2 fade-in-up delay-100">
+        <GreetingHi greeting={t.hero.greeting} subtle />
+      </div>
+      <WarpText
+        as="h1"
+        text={t.hero.name}
+        effect="magnetic"
+        class="font-display-xl text-display-xl mb-3 gradient-text-primary fade-in-up delay-200"
+      />
+      <p class="font-headline-md text-headline-md max-w-2xl text-on-surface-variant fade-in-up delay-300">
+        {
+          roles.map((role, index) => (
+            <>
+              {index > 0 && <span class="mx-2 text-outline-variant">|</span>}
+              <span class="hero-role">{role}</span>
+            </>
+          ))
+        }
+      </p>
+    </div>
+  ) : (
+    <Fragment>
+      <div class:list={["fade-in-up delay-100", compact ? "mb-1" : "mb-4"]}>
+        <GreetingHi greeting={t.hero.greeting} />
+      </div>
+      <WarpText
+        as="h1"
+        text={t.hero.name}
+        effect="magnetic"
+        class:list={[
+          "gradient-text-primary fade-in-up delay-200 font-display-xl",
+          compact ? "mb-2 text-[clamp(2.75rem,8.5vw,4.5rem)]" : "mb-4 text-display-xl",
+        ]}
+      />
+      <p
+        class:list={[
+          "max-w-2xl text-on-surface-variant fade-in-up delay-300",
+          compact ? "mb-3 text-lg leading-snug md:text-headline-md" : "mb-8 font-headline-md text-headline-md",
+        ]}
+      >
+        {
+          roles.map((role, index) => (
+            <>
+              {index > 0 && <span class="mx-2 text-outline-variant">|</span>}
+              <span class="hero-role">{role}</span>
+            </>
+          ))
+        }
+      </p>
+      <p
+        id="hero-tagline"
+        class:list={[
+          "hero-tagline italic text-outline fade-in-up delay-400",
+          compact ? "mb-6 text-base md:mb-8 md:text-body-lg" : "mb-12 font-body-lg text-body-lg",
+        ]}
+      >
+        {t.hero.tagline}
+      </p>
+    </Fragment>
+  )
+}

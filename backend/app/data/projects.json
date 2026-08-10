@@ -1,0 +1,28 @@
+[
+  {
+    "id": "proj-proximamente",
+    "name": "Proyectos — próximamente",
+    "type": "personal",
+    "role": "Autor",
+    "summary": "Sección de proyectos en preparación. Muy pronto se subirán casos reales de automatización y contenidos con IA.",
+    "description": "Borja está preparando esta sección con proyectos reales de automatización de contenidos e inteligencia artificial. Todavía no hay proyectos publicados: vuelve pronto para verlos.",
+    "problem": "",
+    "solution": "",
+    "result": "",
+    "highlights": [
+      "Sección en construcción, sin proyectos publicados todavía."
+    ],
+    "stack": [],
+    "team": [],
+    "links": [],
+    "media": [],
+    "startDate": "2026-08",
+    "endDate": null,
+    "current": true,
+    "tags": ["proximamente", "en-construccion"],
+    "displayGroup": "otras",
+    "featured": true,
+    "order": 1,
+    "visible": true
+  }
+]

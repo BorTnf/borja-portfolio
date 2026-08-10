@@ -1,0 +1,65 @@
+---
+import "@/styles/global.css";
+import SvgWarpFilters from "@/components/ui/SvgWarpFilters.astro";
+import type { Locale } from "@/i18n";
+
+interface Props {
+  title: string;
+  locale: Locale;
+}
+
+const { title, locale } = Astro.props;
+
+const description =
+  locale === "en"
+    ? "Interactive AI-powered portfolio of Borja González, Content & Automation Lead specializing in AI-driven automation and content."
+    : "Portfolio interactivo potenciado por IA de Borja González, Responsable de Contenidos y Automatización especializado en automatización con IA y contenidos.";
+
+const ogImage = new URL("/images/preview-compartir.png", Astro.site ?? Astro.url).href;
+---
+
+<!doctype html>
+<html class="dark" lang={locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"
+    />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- OpenGraph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={Astro.url} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={ogImage} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Geist:wght@500&display=swap"
+      rel="stylesheet"
+    />
+    <script is:inline src="/locale-detect.js"></script>
+  </head>
+  <body
+    class="relative flex min-h-dvh flex-col bg-background antialiased selection:bg-primary selection:text-on-primary"
+  >
+    <SvgWarpFilters />
+    <slot />
+  </body>
+</html>

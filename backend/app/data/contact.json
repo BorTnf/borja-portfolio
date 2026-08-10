@@ -1,0 +1,16 @@
+{
+  "fullName": "Borja González González",
+  "headline": "Responsable de Contenidos y Automatización",
+  "email": "borjag86@gmail.com",
+  "phone": null,
+  "location": {
+    "city": "Santa Cruz de Tenerife",
+    "region": "Canarias",
+    "country": "España",
+    "timezone": "Atlantic/Canary"
+  },
+  "availability": "not-available",
+  "links": [],
+  "preferredContactMethod": "contact-form",
+  "resumeUrl": null
+}

@@ -1,0 +1,90 @@
+[
+  {
+    "id": "skill-comfyui",
+    "name": "ComfyUI",
+    "category": "ai",
+    "proficiency": null,
+    "yearsOfExperience": null,
+    "tags": ["ai", "generative-ai", "image"],
+    "featured": true,
+    "order": 1,
+    "visible": true
+  },
+  {
+    "id": "skill-n8n",
+    "name": "N8N",
+    "category": "ai",
+    "proficiency": null,
+    "yearsOfExperience": null,
+    "tags": ["ai", "automation", "workflow"],
+    "featured": true,
+    "order": 2,
+    "visible": true
+  },
+  {
+    "id": "skill-claude-code",
+    "name": "Claude Code",
+    "category": "ai",
+    "proficiency": null,
+    "yearsOfExperience": null,
+    "tags": ["ai", "agents"],
+    "featured": true,
+    "order": 3,
+    "visible": true
+  },
+  {
+    "id": "skill-gemini",
+    "name": "Gemini",
+    "category": "ai",
+    "proficiency": null,
+    "yearsOfExperience": null,
+    "tags": ["ai", "llm"],
+    "featured": true,
+    "order": 4,
+    "visible": true
+  },
+  {
+    "id": "skill-chatgpt",
+    "name": "ChatGPT",
+    "category": "ai",
+    "proficiency": null,
+    "yearsOfExperience": null,
+    "tags": ["ai", "llm"],
+    "featured": true,
+    "order": 5,
+    "visible": true
+  },
+  {
+    "id": "skill-notion-ia",
+    "name": "Notion IA",
+    "category": "ai",
+    "proficiency": null,
+    "yearsOfExperience": null,
+    "tags": ["ai", "productivity", "content"],
+    "featured": true,
+    "order": 6,
+    "visible": true
+  },
+  {
+    "id": "skill-capcut",
+    "name": "CapCut",
+    "category": "ai",
+    "proficiency": null,
+    "yearsOfExperience": null,
+    "tags": ["ai", "video", "content"],
+    "featured": true,
+    "order": 7,
+    "visible": true
+  },
+  {
+    "id": "skill-elevenlabs",
+    "name": "ElevenLabs",
+    "category": "ai",
+    "proficiency": null,
+    "yearsOfExperience": null,
+    "tags": ["ai", "voice", "content"],
+    "featured": true,
+    "order": 8,
+    "visible": true
+  }
+]

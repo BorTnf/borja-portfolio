@@ -1,0 +1,319 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import HeroIntro from "@/components/sections/HeroIntro.astro";
+import AiPromptCapsules from "@/components/sections/AiPromptCapsules.astro";
+import SubmittedPrompt from "@/components/sections/SubmittedPrompt.astro";
+import LoadingPanel from "@/components/sections/LoadingPanel.astro";
+import SiteFooter from "@/components/layout/SiteFooter.astro";
+import AgentResponseIsland from "@/components/react/AgentResponseIsland";
+import { getTranslations, type Locale } from "@/i18n";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = getTranslations(locale);
+---
+
+<Layout title={t.meta.title} locale={locale}>
+  <div
+    id="page-root"
+    class="flex w-full flex-1 flex-col min-h-0"
+    data-locale={locale}
+    data-error-title={t.errors.connectionTitle}
+    data-error-summary={t.errors.connectionSummary}
+    data-ratelimit-title={t.errors.rateLimitTitle}
+    data-ratelimit-summary={t.errors.rateLimitSummary}
+  >
+    <div id="ambient-background" class="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+      <div id="aurora-shader-layer" class="absolute inset-0 z-0">
+        <canvas id="aurora-shader-canvas" class="block h-full w-full"></canvas>
+      </div>
+      <div id="aurora-particles-layer" class="absolute inset-0 z-10"></div>
+    </div>
+
+    <main
+      id="parallax-container"
+      class="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-margin-edge pb-4 pt-6 md:pt-8"
+    >
+      <div id="phase-landing" class="flex w-full max-w-container-max flex-col items-center text-center">
+        <HeroIntro locale={locale} compact />
+      </div>
+
+      <div id="phase-processing" class="hidden flex w-full max-w-container-max flex-col items-center text-center">
+        <HeroIntro locale={locale} receded />
+        <SubmittedPrompt locale={locale} question="" />
+        <LoadingPanel loading={t.loading} />
+      </div>
+
+      <div id="prompt-dock" class="relative z-20 w-full max-w-container-max">
+        <AiPromptCapsules locale={locale} />
+      </div>
+    </main>
+
+    <section
+      id="phase-dashboard"
+      class="relative z-10 hidden shrink-0 translate-y-10 px-margin-edge py-section-gap-desktop opacity-0 transition-all duration-1000 ease-out"
+    >
+      <div
+        id="agent-response-container"
+        class="mx-auto max-w-container-max"
+        data-followup-label={t.loading.status.followUp}
+        data-ask-again-label={t.dashboard.askAgain}
+        data-ask-again-aria-label={t.dashboard.askAgainAriaLabel}
+      >
+        <AgentResponseIsland client:load />
+      </div>
+    </section>
+
+    <SiteFooter locale={locale} compact class="z-10 shrink-0 transition-all duration-500" />
+  </div>
+
+  <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r125/three.min.js"></script>
+  <script is:inline src="/ambient-background.js"></script>
+</Layout>
+
+<script>
+  import { initCursorParallax } from "@/lib/cursor-parallax";
+
+  initCursorParallax(20);
+</script>
+
+<script>
+  import { streamChatMessage } from "@/lib/api";
+  import { absorbIntoBlackHole, BLACK_HOLE_LANDING_EXIT_MS, clearAbsorbHiddenElements } from "@/lib/black-hole-absorb";
+  import type { AgentResponse } from "@/types/agent-response";
+  import type { ChatStreamEvent } from "@/types/chat-stream";
+
+  const pageRoot = document.getElementById("page-root");
+  const main = document.getElementById("parallax-container");
+  const landingPhase = document.getElementById("phase-landing");
+  const processingPhase = document.getElementById("phase-processing");
+  const dashboardPhase = document.getElementById("phase-dashboard");
+  const promptDock = document.getElementById("prompt-dock");
+  const capsulesRoot = document.getElementById("suggestion-capsules-root");
+
+  type PromptDockMode = "landing" | "processing" | "dashboard";
+
+  function setPromptDockMode(mode: PromptDockMode) {
+    if (!promptDock || !capsulesRoot) return;
+
+    promptDock.classList.remove("hidden");
+    capsulesRoot.classList.remove("is-compact");
+
+    const input = document.getElementById("ai-input") as HTMLInputElement | null;
+
+    if (mode === "processing" || mode === "dashboard") {
+      // Un solo input visible: el de SubmittedPrompt (con check / re-edición).
+      promptDock.classList.add("hidden");
+      return;
+    }
+
+    if (input) {
+      input.disabled = false;
+      input.removeAttribute("readonly");
+    }
+  }
+
+  function syncLandingViewportLock() {
+    const dashboardVisible =
+      dashboardPhase !== null && !dashboardPhase.classList.contains("hidden");
+    if (dashboardVisible) {
+      document.body.classList.remove("portfolio-landing-lock", "portfolio-keyboard-open");
+      return;
+    }
+    document.body.classList.add("portfolio-landing-lock");
+  }
+
+  syncLandingViewportLock();
+  setPromptDockMode("landing");
+
+  const aiInput = document.getElementById("ai-input");
+  if (aiInput) {
+    aiInput.addEventListener("focus", () => {
+      if (document.body.classList.contains("portfolio-landing-lock")) {
+        document.body.classList.add("portfolio-keyboard-open");
+      }
+    });
+    aiInput.addEventListener("blur", () => {
+      document.body.classList.remove("portfolio-keyboard-open");
+      if (document.body.classList.contains("portfolio-landing-lock")) {
+        window.scrollTo(0, 0);
+      }
+    });
+  }
+
+  let agentResponse: AgentResponse | null = null;
+  type PendingAgentResponse = { response: AgentResponse; question: string };
+  const responseBridge = window as Window & {
+    __portfolioPendingAgentResponse?: PendingAgentResponse;
+  };
+
+  function dispatchStreamEvent(event: ChatStreamEvent) {
+    window.dispatchEvent(new CustomEvent("loading:stream", { detail: event }));
+  }
+
+  function resetPortfolio() {
+    agentResponse = null;
+    delete responseBridge.__portfolioPendingAgentResponse;
+
+    dashboardPhase?.classList.add("hidden", "opacity-0", "translate-y-10");
+    dashboardPhase?.classList.remove("is-revealed");
+    processingPhase?.classList.add("hidden");
+    landingPhase?.classList.remove("hidden", "phase-exiting");
+
+    main?.classList.add("flex-1", "min-h-0", "overflow-y-auto", "justify-center");
+    main?.classList.remove("shrink-0", "justify-start");
+
+    pageRoot?.classList.remove("is-thinking");
+
+    clearAbsorbHiddenElements();
+
+    const aiInput = document.getElementById("ai-input") as HTMLInputElement | null;
+    const submittedQuestion = document.getElementById("submitted-question") as HTMLInputElement | null;
+    if (aiInput) aiInput.value = "";
+    if (submittedQuestion) submittedQuestion.value = "";
+
+    window.dispatchEvent(new CustomEvent("portfolio:reset"));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    syncLandingViewportLock();
+    setPromptDockMode("landing");
+  }
+
+  window.addEventListener("portfolio:ask-again", resetPortfolio);
+
+  function prepareRestartFromDashboard() {
+    agentResponse = null;
+    delete responseBridge.__portfolioPendingAgentResponse;
+
+    dashboardPhase?.classList.add("hidden", "opacity-0", "translate-y-10");
+    dashboardPhase?.classList.remove("is-revealed");
+    processingPhase?.classList.add("hidden");
+    landingPhase?.classList.remove("hidden", "phase-exiting");
+
+    main?.classList.add("flex-1", "min-h-0", "overflow-y-auto", "justify-center");
+    main?.classList.remove("shrink-0", "justify-start");
+
+    pageRoot?.classList.remove("is-thinking");
+    clearAbsorbHiddenElements();
+
+    window.dispatchEvent(new CustomEvent("portfolio:reset"));
+    syncLandingViewportLock();
+    setPromptDockMode("landing");
+  }
+
+  function beginQueryFlow(question: string) {
+    const submittedQuestion = document.getElementById("submitted-question") as HTMLInputElement | null;
+    if (submittedQuestion) submittedQuestion.value = question;
+
+    agentResponse = null;
+    pageRoot?.classList.add("is-thinking");
+    setPromptDockMode("processing");
+    window.dispatchEvent(new CustomEvent("prompt:lock-reedit"));
+    document.getElementById("loading-panel")?.classList.remove("hidden");
+
+    const tagline = document.getElementById("hero-tagline");
+    if (tagline instanceof HTMLElement) {
+      void absorbIntoBlackHole([tagline], { delay: 40, stagger: 0 });
+    }
+
+    landingPhase?.classList.add("phase-exiting");
+    window.setTimeout(() => {
+      landingPhase?.classList.add("hidden");
+      landingPhase?.classList.remove("phase-exiting");
+      processingPhase?.classList.remove("hidden");
+      processingPhase?.classList.add("phase-entering");
+      requestAnimationFrame(() => processingPhase?.classList.remove("phase-entering"));
+    }, BLACK_HOLE_LANDING_EXIT_MS);
+
+    main?.classList.add("flex-1", "min-h-0");
+    main?.classList.remove("shrink-0", "justify-center");
+    main?.classList.add("justify-start");
+    window.dispatchEvent(new CustomEvent("loading:start"));
+
+    streamChatMessage(question, dispatchStreamEvent)
+      .then((data) => {
+        agentResponse = data;
+        responseBridge.__portfolioPendingAgentResponse = { response: data, question };
+        window.dispatchEvent(new CustomEvent("loading:finish"));
+        window.dispatchEvent(
+          new CustomEvent("agent-response:ready", { detail: { response: data, question } }),
+        );
+        pageRoot?.classList.remove("is-thinking");
+        revealDashboard();
+      })
+      .catch((error) => {
+        console.error("Error al llamar al backend:", error);
+
+        const isRateLimit = error.message?.includes("429") || error.message?.includes("Demasiadas preguntas");
+        const title = isRateLimit
+          ? (pageRoot?.dataset.ratelimitTitle ?? "Límite de preguntas superado")
+          : (pageRoot?.dataset.errorTitle ?? "Connection issue");
+        const summary = isRateLimit
+          ? (pageRoot?.dataset.ratelimitSummary ?? "Has superado el límite de 10 preguntas por minuto. Por favor, espera un momento antes de volver a preguntar.")
+          : (pageRoot?.dataset.errorSummary ?? "Couldn't reach the backend right now. Please make sure the API is running.");
+
+        const fallback: AgentResponse = {
+          language: pageRoot?.dataset.locale === "en" ? "en" : "es",
+          title,
+          summary,
+          widgets: isRateLimit
+            ? [
+                {
+                  id: "rate-limit-cv-download",
+                  type: "text" as any,
+                  title: null,
+                  data: {
+                    text: "",
+                  },
+                },
+              ]
+            : [],
+          suggested_actions: [],
+        };
+        agentResponse = fallback;
+        responseBridge.__portfolioPendingAgentResponse = { response: fallback, question };
+        window.dispatchEvent(new CustomEvent("loading:finish"));
+        window.dispatchEvent(
+          new CustomEvent("agent-response:ready", { detail: { response: fallback, question } }),
+        );
+        pageRoot?.classList.remove("is-thinking");
+        revealDashboard();
+      });
+  }
+
+  function revealDashboard() {
+    if (!dashboardPhase || !pageRoot || !main || agentResponse === null) return;
+
+    // Main deja de absorber altura; el footer sigue abajo vía mt-auto + min-h-dvh.
+    main.classList.remove("flex-1", "min-h-0", "overflow-y-auto", "justify-center", "justify-start");
+    main.classList.add("shrink-0");
+
+    dashboardPhase.classList.remove("hidden");
+    dashboardPhase.classList.add("is-revealed");
+    requestAnimationFrame(() => {
+      dashboardPhase.classList.remove("opacity-0", "translate-y-10");
+      dashboardPhase.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    document.body.classList.remove("portfolio-landing-lock", "portfolio-keyboard-open");
+    setPromptDockMode("dashboard");
+    window.dispatchEvent(new CustomEvent("prompt:enable-reedit"));
+  }
+
+  window.addEventListener("mock-chat:submit", (event) => {
+    if (!landingPhase || !processingPhase) return;
+
+    const question = (event as CustomEvent<{ question: string }>).detail?.question ?? "";
+    if (!question.trim()) return;
+
+    const dashboardVisible =
+      dashboardPhase !== null && !dashboardPhase.classList.contains("hidden");
+
+    if (dashboardVisible) {
+      prepareRestartFromDashboard();
+    }
+
+    beginQueryFlow(question);
+  });
+</script>

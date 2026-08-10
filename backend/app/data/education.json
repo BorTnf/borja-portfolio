@@ -1,0 +1,53 @@
+[
+  {
+    "id": "edu-ilerna-master-ia-bigdata",
+    "institution": "Ilerna Online",
+    "institutionUrl": "https://www.ilerna.es",
+    "degree": "Máster FP en Inteligencia Artificial y Big Data",
+    "fieldOfStudy": "Inteligencia Artificial y Big Data",
+    "location": "Online",
+    "startDate": "2025-09",
+    "endDate": "2026-06",
+    "status": "completed",
+    "gpa": 9,
+    "highlights": [],
+    "tags": ["education", "ai", "big-data", "ilerna"],
+    "featured": true,
+    "order": 1,
+    "visible": true
+  },
+  {
+    "id": "edu-ilerna-daw",
+    "institution": "Ilerna Online",
+    "institutionUrl": "https://www.ilerna.es",
+    "degree": "Técnico Superior en Desarrollo de Aplicaciones Web",
+    "fieldOfStudy": "Desarrollo de Aplicaciones Web",
+    "location": "Online",
+    "startDate": "2023-09",
+    "endDate": "2025-06",
+    "status": "completed",
+    "gpa": 9,
+    "highlights": [],
+    "tags": ["education", "daw", "web-development", "ilerna"],
+    "featured": true,
+    "order": 2,
+    "visible": true
+  },
+  {
+    "id": "edu-cifp-cesar-manrique-marketing",
+    "institution": "CIFP César Manrique",
+    "institutionUrl": null,
+    "degree": "Técnico Superior en Marketing y Publicidad",
+    "fieldOfStudy": "Marketing y Publicidad",
+    "location": "Santa Cruz de Tenerife, Canarias, España",
+    "startDate": "2018-09",
+    "endDate": "2020-06",
+    "status": "completed",
+    "gpa": 9,
+    "highlights": [],
+    "tags": ["education", "marketing", "publicidad"],
+    "featured": true,
+    "order": 3,
+    "visible": true
+  }
+]
