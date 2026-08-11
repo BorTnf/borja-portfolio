@@ -8,14 +8,14 @@ export const es: Translations = {
     greeting: "Hola",
     name: "Soy Borja",
     roles: ["Responsable de Contenidos y Automatización"],
-    tagline: "Conocé mi perfil preguntando lo que quieras.",
+    tagline: "Conoce mi perfil preguntando lo que quieras.",
   },
   prompts: {
     placeholders: [
-      "Preguntame sobre mi experiencia en IA...",
-      "Preguntame sobre mis proyectos...",
-      "Preguntame sobre mi docencia...",
-      "Preguntame lo que quieras...",
+      "Pregúntame sobre mi experiencia en IA...",
+      "Pregúntame sobre mis proyectos...",
+      "Pregúntame sobre mi docencia...",
+      "Pregúntame lo que quieras...",
     ],
     sendAriaLabel: "Enviar",
   },
@@ -23,7 +23,7 @@ export const es: Translations = {
     {
       id: "ai",
       label: "Inteligencia Artificial",
-      question: "Contame sobre tu experiencia con IA...",
+      question: "Cuéntame sobre tu experiencia con IA...",
     },
     {
       id: "automation",
@@ -33,17 +33,17 @@ export const es: Translations = {
     {
       id: "content",
       label: "Contenidos",
-      question: "¿Cómo trabajás la generación y gestión de contenidos?",
+      question: "¿Cómo trabajas la generación y gestión de contenidos?",
     },
     {
       id: "marketing",
       label: "Marketing",
-      question: "Contame sobre tu experiencia en marketing...",
+      question: "Cuéntame sobre tu experiencia en marketing...",
     },
     {
       id: "bigdata",
       label: "Big Data",
-      question: "¿Qué experiencia tenés con Big Data?",
+      question: "¿Qué experiencia tienes con Big Data?",
     },
     {
       id: "education",
@@ -53,12 +53,12 @@ export const es: Translations = {
     {
       id: "experience",
       label: "Experiencia",
-      question: "Resumí tu experiencia profesional...",
+      question: "Resume tu experiencia profesional...",
     },
     {
       id: "projects",
       label: "Proyectos",
-      question: "Mostrame todos tus proyectos...",
+      question: "Muéstrame todos tus proyectos...",
     },
   ],
   loading: {
@@ -84,7 +84,7 @@ export const es: Translations = {
   errors: {
     connectionTitle: "Problema de conexión",
     connectionSummary:
-      "No pudimos conectar con el backend en este momento. Verificá que la API esté en ejecución.",
+      "No pudimos conectar con el backend en este momento. Verifica que la API esté en ejecución.",
     rateLimitTitle: "Límite de preguntas superado",
     rateLimitSummary: "Has superado el límite de 10 preguntas por minuto. Por favor, espera un momento antes de volver a preguntar.",
     downloadCV: "Descargar CV Completo",
