@@ -7,7 +7,7 @@ Documentación técnica del **AI Portfolio**. Para una visión general del proye
 | Documento | Contenido |
 |---|---|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Flujo del agente conversacional, function calling, eventos SSE, contrato `AgentResponse`, tools y datos, i18n. |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Despliegue del frontend en **Cloudflare Pages** y del backend en **Railway**, variables de entorno de producción y troubleshooting. |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Despliegue del frontend en **Cloudflare Pages** y del backend en **Render**, variables de entorno de producción y troubleshooting. |
 
 ## Documentación relacionada (en el código)
 

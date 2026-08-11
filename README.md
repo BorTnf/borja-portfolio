@@ -4,8 +4,8 @@ Portfolio personal **conversacional**: en lugar de secciones estáticas, el visi
 
 **Live:** 
 
-- **Frontend** — Astro 5 + React Islands + Tailwind, sitio estático desplegado en **Cloudflare Pages**.
-- **Backend** — FastAPI + Google Gemini con *function calling*, desplegado en **Railway**.
+- **Frontend** — Astro 5 + React Islands + Tailwind, sitio estático desplegado en **Cloudflare Pages** ([borja-portfolio.pages.dev](https://borja-portfolio.pages.dev/)).
+- **Backend** — FastAPI + Google Gemini con *function calling*, desplegado en **Render** ([borja-portfolio-api.onrender.com](https://borja-portfolio-api.onrender.com)).
 
 ---
 
@@ -33,7 +33,7 @@ Portfolio personal **conversacional**: en lugar de secciones estáticas, el visi
                                    ▼
                     ┌─────────────────────────────┐
                     │   Backend (FastAPI)         │
-                    │   Railway                   │
+                    │   Render                    │
                     │                             │
                     │   ┌───────────────────────┐ │
                     │   │  Agente Gemini        │ │
@@ -47,7 +47,7 @@ Portfolio personal **conversacional**: en lugar de secciones estáticas, el visi
 
 El backend **no usa base de datos**: todo el contenido del portfolio vive en archivos JSON versionados en `backend/app/data/`. El modelo llama a las *tools* que leen esos JSON y con eso arma la respuesta.
 
-Para el detalle completo del flujo del agente, mirá [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+Para el detalle completo del flujo del agente, mira [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ---
 
@@ -68,8 +68,8 @@ Para el detalle completo del flujo del agente, mirá [`docs/ARCHITECTURE.md`](do
 - Python 3.12+
 
 ### Infraestructura
-- **Cloudflare Pages** — hosting del frontend estático + CDN global
-- **Railway** — hosting del backend FastAPI
+- **Cloudflare Pages** — hosting del frontend estático + CDN global (plan Free)
+- **Render** — hosting del backend FastAPI (plan Free; el servicio se duerme tras 15 min de inactividad)
 
 ---
 
@@ -97,7 +97,7 @@ ai-portfolio/
 │   │   ├── pages/        # Routing file-based (es + /en)
 │   │   └── types/        # Contratos compartidos con el backend
 │   └── public/           # Estáticos (imágenes, CV en PDF)
-├── backend/           # API FastAPI + agente Gemini (Railway)
+├── backend/           # API FastAPI + agente Gemini (Render)
 │   ├── app/
 │   │   ├── ai/           # Cliente y orquestador de Gemini
 │   │   ├── api/v1/        # Routers y endpoints (/chat, /chat/stream)
@@ -173,7 +173,7 @@ Sitio en `http://localhost:4321`.
 ## Despliegue
 
 - **Frontend → Cloudflare Pages.** Build `npm run build`, directorio de salida `dist/`. Configurar `PUBLIC_API_URL` con la URL pública del backend.
-- **Backend → Railway.** Start `python run.py` (lee `HOST`/`PORT` del entorno; Railway inyecta `PORT`). Configurar `GEMINI_API_KEY` y `BACKEND_CORS_ORIGINS` con el dominio de Cloudflare Pages.
+- **Backend → Render.** Start `python run.py` (lee `HOST`/`PORT` del entorno; Render inyecta `PORT`). Configurar `GEMINI_API_KEY` y `BACKEND_CORS_ORIGINS` con el dominio de Cloudflare Pages.
 
 Guía paso a paso en [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
@@ -182,7 +182,7 @@ Guía paso a paso en [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 ## Documentación
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — flujo del agente, tools, contrato de widgets.
-- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — despliegue en Cloudflare Pages y Railway.
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — despliegue en Cloudflare Pages y Render.
 - [`backend/app/data/README.md`](backend/app/data/README.md) — forma de los JSON de contenido.
 - [`backend/app/schemas/README.md`](backend/app/schemas/README.md) — contrato de widgets.
 

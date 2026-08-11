@@ -76,4 +76,4 @@ cp .env.example .env
 
 El frontend se buildea como sitio **estático** (`npm run build` → `dist/`) y se
 despliega en **Cloudflare Pages**. En producción, `PUBLIC_API_URL` debe apuntar
-al backend en Railway. Ver [`docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md).
+al backend en Render. Ver [`docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md).
