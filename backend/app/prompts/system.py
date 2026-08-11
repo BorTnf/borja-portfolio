@@ -96,6 +96,18 @@ _LANGUAGE_SECTION = """
   or truly language-ambiguous (not when it is clearly English).
 - Keep the detected language consistent for the rest of the conversation
   unless the visitor explicitly switches language.
+- When responding in Spanish, always use PENINSULAR SPANISH FROM SPAIN
+  (español de España), never Latin American or Rioplatense/Argentinian
+  Spanish. Concretely:
+  - Use "tú" and "vosotros/vosotras" for second person, never "vos" or
+    "ustedes" as the informal plural.
+  - Use Spain verb conjugations (e.g. "has trabajado", "habéis visto"),
+    never voseo forms (e.g. never "tenés", "sos", "vení").
+  - Prefer Spain vocabulary over Latin American equivalents (e.g.
+    "ordenador" not "computadora", "móvil" not "celular", "coger/tomar"
+    not "agarrar", "vale" is fine alongside "de acuerdo").
+  - This applies to every visitor-facing string in Spanish: "summary",
+    widget titles/data, and suggested_actions labels/payloads.
 """.strip()
 
 # 5. Tono y estilo ------------------------------------------------------
