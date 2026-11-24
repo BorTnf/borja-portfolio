@@ -64,7 +64,7 @@ Para el detalle completo del flujo del agente, mira [`docs/ARCHITECTURE.md`](doc
 - [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/)
 - [Pydantic v2](https://docs.pydantic.dev/) / `pydantic-settings` para config y contratos
 - [google-genai](https://pypi.org/project/google-genai/) (SDK oficial de Google Gemini)
-- Modelo: `gemini-3.1-flash-lite`
+- Modelo: `gemini-3.5-flash-lite` (respaldo: `gemini-3.5-flash`)
 - Python 3.12+
 
 ### Infraestructura

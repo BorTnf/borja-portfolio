@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from collections.abc import AsyncIterator, Callable
 from typing import Any
 
@@ -12,6 +13,7 @@ from google.genai import errors as genai_errors
 from google.genai import types
 
 from app.ai.gemini_client import MODEL, TOOLS, client
+from app.core.config import settings
 from app.schemas.agent_response import AgentResponse
 
 logger = logging.getLogger(__name__)
@@ -20,6 +22,66 @@ EventCallback = Callable[[dict[str, Any]], None]
 
 MAX_TOOL_TURNS = 12
 TOOL_MAP = {tool.__name__: tool for tool in TOOLS}
+
+# Errores transitorios de Gemini: saturación (503), límite de cuota (429) y
+# fallos internos (500, 504). Otros códigos (400, 403...) no se reintentan:
+# repetir una petición mal formada o sin permiso daría el mismo error.
+RETRYABLE_CODES = {429, 500, 503, 504}
+
+
+class ModelCaller:
+    """Llama a Gemini con reintentos y modelo de respaldo (harness del agente).
+
+    Cada error transitorio se reintenta con espera exponencial
+    (`GEMINI_RETRY_BASE_SECONDS` × 1, × 2, × 4...). Si el modelo principal
+    agota sus reintentos, se pasa al modelo de respaldo y se sigue usando ese
+    durante el resto de la pregunta, para no pagar de nuevo las esperas en
+    cada turno del bucle de herramientas.
+    """
+
+    def __init__(
+        self,
+        models: list[str] | None = None,
+        max_retries: int | None = None,
+        base_delay: float | None = None,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
+        if models is None:
+            models = [MODEL]
+            if settings.GEMINI_FALLBACK_MODEL and settings.GEMINI_FALLBACK_MODEL != MODEL:
+                models.append(settings.GEMINI_FALLBACK_MODEL)
+        self.models = models
+        self.max_retries = settings.GEMINI_MAX_RETRIES if max_retries is None else max_retries
+        self.base_delay = settings.GEMINI_RETRY_BASE_SECONDS if base_delay is None else base_delay
+        self._sleep = sleep
+        self._index = 0
+
+    @property
+    def model(self) -> str:
+        return self.models[self._index]
+
+    def __call__(self, contents: list[types.Content], config: dict[str, Any]):
+        last_error: genai_errors.APIError | None = None
+        while self._index < len(self.models):
+            for attempt in range(self.max_retries + 1):
+                try:
+                    return client.models.generate_content(model=self.model, contents=contents, config=config)
+                except genai_errors.APIError as error:
+                    if error.code not in RETRYABLE_CODES:
+                        raise
+                    last_error = error
+                    if attempt < self.max_retries:
+                        delay = self.base_delay * 2**attempt
+                        logger.warning(
+                            "gemini_retry model=%s code=%s intento=%d espera=%.1fs",
+                            self.model, error.code, attempt + 1, delay,
+                        )
+                        self._sleep(delay)
+            if self._index + 1 < len(self.models):
+                logger.warning("gemini_fallback de %s a %s", self.model, self.models[self._index + 1])
+            self._index += 1
+        assert last_error is not None
+        raise last_error
 
 
 def _tool_config(system_instruction: str | None) -> dict[str, Any]:
@@ -66,12 +128,10 @@ def generate_with_events(
         types.Content(role="user", parts=[types.Part.from_text(text=prompt)]),
     ]
 
+    call_model = ModelCaller()
+
     for _turn in range(MAX_TOOL_TURNS):
-        response = client.models.generate_content(
-            model=MODEL,
-            contents=contents,
-            config=_tool_config(system_instruction),
-        )
+        response = call_model(contents, _tool_config(system_instruction))
 
         if not response.candidates:
             break
@@ -106,7 +166,9 @@ def generate_with_events(
             try:
                 parsed = AgentResponse.model_validate_json(text)
             except pydantic.ValidationError:
-                contents.append(candidate.content)
+                # El borrador en texto libre se descarta: la conversación no puede
+                # terminar en un turno del modelo (Gemini 3.5 lo rechaza con 400) y
+                # la llamada estructurada lo regenera desde los resultados de las tools.
                 break
             else:
                 emit({"type": "status", "phase": "synthesizing"})
@@ -115,11 +177,7 @@ def generate_with_events(
         break
 
     emit({"type": "status", "phase": "synthesizing"})
-    final = client.models.generate_content(
-        model=MODEL,
-        contents=contents,
-        config=_structured_config(system_instruction),
-    )
+    final = call_model(contents, _structured_config(system_instruction))
     return AgentResponse.model_validate_json(final.text)
 
 

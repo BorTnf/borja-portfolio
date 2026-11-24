@@ -16,7 +16,7 @@ from app.tools import (
     get_timeline,
 )
 
-MODEL = "gemini-3.1-flash-lite"
+MODEL = settings.GEMINI_MODEL
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
 

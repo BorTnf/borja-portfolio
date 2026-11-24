@@ -12,6 +12,11 @@ class Settings(BaseSettings):
 
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:4321"]
     GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-3.5-flash-lite"
+    # Reintentos ante errores transitorios y modelo de respaldo.
+    GEMINI_FALLBACK_MODEL: str = "gemini-3.5-flash"
+    GEMINI_MAX_RETRIES: int = 2
+    GEMINI_RETRY_BASE_SECONDS: float = 1.0
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

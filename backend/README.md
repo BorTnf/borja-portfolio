@@ -94,7 +94,7 @@ Ambos aplican rate limiting (10 req/min por IP, `app/core/rate_limiter.py`).
 
 ## Agente
 
-El asistente usa **Google Gemini** (`gemini-3.1-flash-lite`) con *function calling*
+El asistente usa **Google Gemini** (`gemini-3.5-flash-lite` (respaldo: `gemini-3.5-flash`)) con *function calling*
 manual sobre 9 tools (`app/tools/get_*.py`), cada una leyendo un JSON de
 `app/data/`. La respuesta se valida contra el schema `AgentResponse`
 (`app/schemas/agent_response.py`).
